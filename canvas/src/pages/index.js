@@ -1,5 +1,14 @@
 import React from 'react';
-import {useRef, useEffect, useState} from 'react';
+import {useRef, useEffect, useState, useReducer} from 'react';
+import {
+    GlassMagnifier,
+    Magnifier,
+    MagnifierContainer,
+    MagnifierPreview,
+    MagnifierZoom,
+    PictureInPictureMagnifier,
+} from 'react-image-magnifiers';
+
 import disney1 from '../assets/animation1.png';
 
 const Home = () => {
@@ -86,75 +95,68 @@ const Home = () => {
         setTransform();
     }
 
-    const imgID = document.getElementById('imgID');
-    const resultID = document.getElementById('resultID');
+    const initialState = {
+        previewHorizontalPos: 'left',
+        previewVerticalPos: 'bottom',
+        previewSizePercentage: 35,
+        previewOpacity: 1,
+        shadow: false,
+        show: true,
+    };
 
-    function imageZoom(imgID, resultID) {
-        var img, lens, result, cx, cy;
-        img = document.getElementById(imgID);
-        result = document.getElementById(resultID);
-        /* Create lens: */
-        lens = document.createElement('DIV');
-        lens.setAttribute('class', 'img-zoom-lens');
-        /* Insert lens: */
-        img.parentElement.insertBefore(lens, img);
-        /* Calculate the ratio between result DIV and lens: */
-        cx = result.offsetWidth / lens.offsetWidth;
-        cy = result.offsetHeight / lens.offsetHeight;
-        /* Set background properties for the result DIV */
-        result.style.backgroundImage = "url('" + img.src + "')";
-        result.style.backgroundSize = img.width * cx + 'px ' + img.height * cy + 'px';
-        /* Execute a function when someone moves the cursor over the image, or the lens: */
-        lens.addEventListener('mousemove', moveLens);
-        img.addEventListener('mousemove', moveLens);
-        /* And also for touch screens: */
-        lens.addEventListener('touchmove', moveLens);
-        img.addEventListener('touchmove', moveLens);
-        function moveLens(e) {
-            var pos, x, y;
-            /* Prevent any other actions that may occur when moving over the image */
-            e.preventDefault();
-            /* Get the cursor's x and y positions: */
-            pos = getCursorPos(e);
-            /* Calculate the position of the lens: */
-            x = pos.x - lens.offsetWidth / 2;
-            y = pos.y - lens.offsetHeight / 2;
-            /* Prevent the lens from being positioned outside the image: */
-            if (x > img.width - lens.offsetWidth) {
-                x = img.width - lens.offsetWidth;
-            }
-            if (x < 0) {
-                x = 0;
-            }
-            if (y > img.height - lens.offsetHeight) {
-                y = img.height - lens.offsetHeight;
-            }
-            if (y < 0) {
-                y = 0;
-            }
-            /* Set the position of the lens: */
-            lens.style.left = x + 'px';
-            lens.style.top = y + 'px';
-            /* Display what the lens "sees": */
-            result.style.backgroundPosition = '-' + x * cx + 'px -' + y * cy + 'px';
-        }
+    const image = 'https://i.pinimg.com/originals/bf/82/f6/bf82f6956a32819af48c2572243e8286.jpg';
 
-        function getCursorPos(e) {
-            var a,
-                x = 0,
-                y = 0;
-            e = e || window.event;
-            /* Get the x and y positions of the image: */
-            a = img.getBoundingClientRect();
-            /* Calculate the cursor's x and y coordinates, relative to the image: */
-            x = e.pageX - a.left;
-            y = e.pageY - a.top;
-            /* Consider any page scrolling: */
-            x = x - window.pageXOffset;
-            y = y - window.pageYOffset;
-            return {x: x, y: y};
+    function imageViewerReducer(state, action) {
+        switch (action.type) {
+            case 'POS_UPDATE':
+                return {...state, [action.payload.key]: action.payload.value};
+            case 'SHADOW_UPDATE':
+                return {...state, shadow: action.payload};
+            case 'SIZE_UPDATE':
+                return {...state, previewSizePercentage: action.payload};
+            case 'OPACITY_UPDATE':
+                return {...state, previewOpacity: action.payload};
+            case 'SHOW_UPDATE':
+                return {...state, show: action.payload};
+            default:
+                return state;
         }
     }
+
+    const [imageState, imageDispatch] = useReducer(imageViewerReducer, initialState);
+    const show = (value = true) => {
+        // this.setState(() => ({ show: true }));
+        imageDispatch({type: 'SHOW_UPDATE', payload: value});
+    };
+
+    const handlePosChange = (e, key) => {
+        const value = e.target.value;
+        // this.setState(() => ({ [key]: value, show: false }), this.show);
+        imageDispatch({type: 'POS_UPDATE', payload: {key, value}});
+        show(false);
+    };
+
+    const handleShadowChange = e => {
+        const value = Boolean(e.target.value);
+        // this.setState(() => ({ shadow: value }));
+        imageDispatch({type: 'SHADOW_UPDATE', payload: value});
+    };
+
+    const handleSizeChange = e => {
+        const value = Number(e.target.value);
+        // this.setState(
+        //   () => ({ previewSizePercentage: value, show: false }),
+        //   this.show
+        // );
+        imageDispatch({type: 'SIZE_UPDATE', payload: value});
+        show(false);
+    };
+
+    const handleOpacityChange = e => {
+        const value = Number(e.target.value);
+        // this.setState(() => ({ previewOpacity: value }));
+        imageDispatch({type: 'OPACITY_UPDATE', payload: value});
+    };
 
     return (
         <div>
@@ -184,19 +186,87 @@ const Home = () => {
                 </div>
             </div>
             <h2> 이미지 프리뷰 </h2>
-            <div className="img-zoom-container">
-                <img
-                    id="myimage"
-                    src={disney1}
-                    width="300"
-                    height="240"
-                    alt="Girl"
-                    onMouseOver={() => imageZoom(imgID, resultID)}
+            <div className="App">
+                {imageState.show ? (
+                    <PictureInPictureMagnifier
+                        className="input-position"
+                        imageSrc={image}
+                        largeImageSrc={image}
+                        previewHorizontalPos={imageState.previewHorizontalPos}
+                        previewVerticalPos={imageState.previewVerticalPos}
+                        previewSizePercentage={imageState.previewSizePercentage}
+                        previewOpacity={imageState.previewOpacity}
+                        shadow={imageState.shadow}
+                    />
+                ) : null}
+                <PictureExampleControls
+                    handlePosChange={handlePosChange}
+                    handleShadowChange={handleShadowChange}
+                    handleSizeChange={handleSizeChange}
+                    handleOpacityChange={handleOpacityChange}
                 />
-                <div id="myresult" className="img-zoom-result"></div>
             </div>
         </div>
     );
+
+    function PictureExampleControls({handlePosChange, handleShadowChange, handleSizeChange, handleOpacityChange}) {
+        return (
+            <div className="controls">
+                <div className="label-flex">
+                    <label className="label-left">
+                        Horizontal Align:
+                        <select onChange={e => handlePosChange(e, 'previewHorizontalPos')}>
+                            <option>left</option>
+                            <option>right</option>
+                        </select>
+                    </label>
+                    <label className="label-right">
+                        Vertical Align:
+                        <select onChange={e => handlePosChange(e, 'previewVerticalPos')}>
+                            <option>bottom</option>
+                            <option>top</option>
+                        </select>
+                    </label>
+                </div>
+                <div className="label-flex">
+                    <label className="label-left">
+                        Preview Size (%):
+                        <select defaultValue="35" onChange={handleSizeChange}>
+                            <option>25</option>
+                            <option>30</option>
+                            <option>35</option>
+                            <option>40</option>
+                            <option>45</option>
+                            <option>50</option>
+                        </select>
+                    </label>
+                    <label className="label-right">
+                        Preview Shadow:
+                        <select onChange={handleShadowChange}>
+                            <option value="">false</option>
+                            <option value="true">true</option>
+                        </select>
+                    </label>
+                </div>
+                <label className="label">
+                    Preview Opacity:
+                    <select defaultValue="1" onChange={handleOpacityChange}>
+                        <option>0</option>
+                        <option>.1</option>
+                        <option>.2</option>
+                        <option>.3</option>
+                        <option>.4</option>
+                        <option>.5</option>
+                        <option>.6</option>
+                        <option>.7</option>
+                        <option>.8</option>
+                        <option>.9</option>
+                        <option>1</option>
+                    </select>
+                </label>
+            </div>
+        );
+    }
 };
 
 export default Home;
