@@ -89,6 +89,7 @@ const Home = () => {
 
     return (
         <div>
+            <h2> 이미지 줌아웃 </h2>
             <div className="zoom_outer" width={'300px'}>
                 <div
                     id="zoom"
@@ -100,7 +101,7 @@ const Home = () => {
                     <img src={disney1} alt="zoom" />
                 </div>
             </div>
-
+            <h2> 브러쉬 </h2>
             <div className="view" style={{backgroundColor: 'beige'}}>
                 <div className="canvasWrap">
                     <canvas
