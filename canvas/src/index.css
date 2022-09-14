@@ -30,6 +30,10 @@ div#zoom > img {
     height: auto;
 }
 
+.canvas {
+    border: 5px solid purple;
+}
+
 .img-zoom-container {
     position: relative;
 }
