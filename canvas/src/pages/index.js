@@ -114,6 +114,7 @@ const Home = () => {
                     ></canvas>
                 </div>
             </div>
+            <h2> 이미지 프리뷰 </h2>
         </div>
     );
 };
