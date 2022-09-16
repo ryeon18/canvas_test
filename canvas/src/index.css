@@ -72,3 +72,8 @@ div#zoom > img {
 .image-in-zoom {
     border: 1px solid purple;
 }
+
+#output {
+    height: 200px;
+    border: 1px solid salmon;
+}
